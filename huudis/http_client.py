@@ -1,6 +1,7 @@
 """Typed HTTP client for Huudis.
 
-Bearer auth, proactive refresh (~5min before expiry), reactive single
+Bearer auth (or, without a session, an httpx ``auth`` such as an access key's
+signature), proactive refresh (~5min before expiry), reactive single
 retry on 401 with refresh in between, envelope unwrap (Forjio
 data/error/meta shape), auto-pagination.
 
@@ -29,8 +30,11 @@ class ApiClient:
         retry_on_5xx: int = 1,
         default_headers: Optional[Dict[str, str]] = None,
         default_query: Optional[Dict[str, str]] = None,
+        auth: Optional[httpx.Auth] = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
+        # Applied to a request that carries no bearer (see signing.AccessKeyAuth).
+        self.auth = auth
         self.session = session
         self._http = http or httpx.Client(timeout=10.0)
         self._owns_http = http is None
@@ -144,6 +148,8 @@ class ApiClient:
         if token:
             h["authorization"] = f"Bearer {token}"
         kwargs: Dict[str, Any] = {"params": merged_q or None, "headers": h}
+        if not token and self.auth is not None:
+            kwargs["auth"] = self.auth
         if body is not None:
             h.setdefault("content-type", "application/json")
             kwargs["json"] = body

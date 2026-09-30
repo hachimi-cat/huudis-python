@@ -6,7 +6,7 @@ Flask, Django, or anything else that speaks WSGI/ASGI.
 ## Install
 
 ```bash
-pip install huudis
+pip install forjio-huudis
 ```
 
 ## Quickstart
@@ -72,6 +72,31 @@ result = huudis.authz_check(
 if not result["allow"]:
     raise HTTPException(403, detail=result.get("reason"))
 ```
+
+## Call the API — every route, with the right credential
+
+`client.api` has one method per Huudis API route (generated from the API spec). Each call
+carries the credential its route group takes: a signed-in person's `session` bearer; else,
+for programs, an IAM access key (`access_key_id` + `secret_access_key`, or
+`HUUDIS_ACCESS_KEY_ID` + `HUUDIS_SECRET_ACCESS_KEY`), each request signed
+`Huudis-HMAC-SHA256` and acting as the key's user within the user's IAM policies; and for
+`/app/*`, your OIDC app's `client_id` + `client_secret` (HTTP Basic).
+
+```python
+from huudis import HuudisClient
+
+huudis = HuudisClient(issuer="https://huudis.com", access_key_id="AKIA…", secret_access_key="…",
+                      workspace_id="acc_…")  # workspace_id is optional
+users = huudis.api.iam_users()
+huudis.api.iam_create_groups(name="On call")
+
+app = HuudisClient(issuer="https://huudis.com", client_id="oc_…", client_secret="cs_…")
+signed_in = app.api.app_users(status="active")
+```
+
+Person-only routes (password, sessions, account deletion, adding members, …) refuse a key
+with `PERSON_ONLY`; see <https://huudis.com/docs/api/authentication>. `sign_request(...)`
+and `AccessKeyAuth` (an `httpx.Auth`) sign requests you build yourself.
 
 ## Types
 

@@ -24,6 +24,7 @@ from .device_flow import (
 from .errors import ApiError, HuudisAuthError, NetworkError, RefreshError
 from .http_client import ApiClient
 from .session import ProfileData, Session
+from .signing import AccessKeyAuth, ClientCredentialsAuth, sign_request
 from .webhooks import verify_webhook_signature
 
 __all__ = [
@@ -51,8 +52,12 @@ __all__ = [
     # session
     "ProfileData",
     "Session",
+    # signing
+    "AccessKeyAuth",
+    "ClientCredentialsAuth",
+    "sign_request",
     # webhooks
     "verify_webhook_signature",
 ]
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

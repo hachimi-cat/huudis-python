@@ -6,15 +6,18 @@ webhook subscriptions, etc.) on top of the existing OIDC auth helpers.
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 
 import httpx
 
+from .api_generated import GeneratedApi
 from .auth import HuudisClaims, verify_access_token
 from .errors import HuudisAuthError
 from .http_client import ApiClient
+from .signing import AccessKeyAuth, ClientCredentialsAuth
 from .resources import (
     AccountResources,
     AssumedSessionsResources,
@@ -32,6 +35,17 @@ from .resources import (
     build_resources,
 )
 from .session import Session
+
+
+class _Api(GeneratedApi):
+    """``client.api``: every feature route (generated). Until 0.4.1 ``client.api`` was the
+    low-level ApiClient; its get/post/patch/put/delete/paginate still answer here, from
+    ``client.api_client``."""
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._client.api_client, name)
 
 
 class HuudisClient:
@@ -63,23 +77,56 @@ class HuudisClient:
         api_base: Optional[str] = None,
         session: Optional[Session] = None,
         http: Optional[httpx.Client] = None,
+        access_key_id: Optional[str] = None,
+        secret_access_key: Optional[str] = None,
+        workspace_id: Optional[str] = None,
     ) -> None:
+        """``access_key_id`` + ``secret_access_key`` (default ``HUUDIS_ACCESS_KEY_ID`` +
+        ``HUUDIS_SECRET_ACCESS_KEY``): an IAM access key for programs. With no ``session``,
+        every API call is signed with it (``Huudis-HMAC-SHA256``) and acts as the key's
+        user, within that user's IAM policies; person-only routes refuse it. ``client_id``
+        is then optional (the OIDC helpers and ``/api/v1/app/*`` need it).
+        ``/api/v1/app/*`` authenticates with ``client_id`` + ``client_secret``.
+        ``workspace_id`` (default ``HUUDIS_WORKSPACE_ID``) names the workspace to act in."""
         resolved_issuer = issuer or os.environ.get("HUUDIS_ISSUER")
         resolved_client_id = client_id or os.environ.get("HUUDIS_CLIENT_ID")
+        key_id = access_key_id or os.environ.get("HUUDIS_ACCESS_KEY_ID")
+        key_secret = secret_access_key or os.environ.get("HUUDIS_SECRET_ACCESS_KEY")
+        resolved_workspace = workspace_id or os.environ.get("HUUDIS_WORKSPACE_ID")
         if not resolved_issuer:
             raise HuudisAuthError("MISSING_ISSUER", "Set HUUDIS_ISSUER env or pass issuer=...")
-        if not resolved_client_id:
-            raise HuudisAuthError("MISSING_CLIENT_ID", "Set HUUDIS_CLIENT_ID env or pass client_id=...")
+        if not resolved_client_id and not (key_id and key_secret):
+            raise HuudisAuthError(
+                "MISSING_CLIENT_ID",
+                "Set HUUDIS_CLIENT_ID env or pass client_id=... (or an access key)",
+            )
         self.issuer = resolved_issuer.rstrip("/")
-        self.client_id = resolved_client_id
+        self.client_id = resolved_client_id or ""
         self.client_secret = client_secret or os.environ.get("HUUDIS_CLIENT_SECRET")
-        self.audience = audience or resolved_client_id
+        self.audience = audience or self.client_id
         self.api_base = (api_base or self.issuer).rstrip("/")
         self._http = http or httpx.Client(timeout=10.0)
         self._owns_http = http is None
-        self.api = ApiClient(base_url=self.api_base, session=session, http=self._http)
+        default_headers = {"x-huudis-workspace-id": resolved_workspace} if resolved_workspace else None
+        # A signed-in person's session wins; without one, an access key signs every call.
+        key_auth = AccessKeyAuth(key_id, key_secret) if key_id and key_secret and session is None else None
+        self.api_client = ApiClient(
+            base_url=self.api_base, session=session, http=self._http,
+            default_headers=default_headers, auth=key_auth,
+        )
+        # /api/v1/app/*: the app's own OIDC client credentials.
+        self._app_client: Optional[ApiClient] = (
+            ApiClient(
+                base_url=self.api_base, http=self._http,
+                auth=ClientCredentialsAuth(self.client_id, self.client_secret),
+            )
+            if self.client_id and self.client_secret
+            else None
+        )
+        # Every feature route, one method each (generated from the API spec).
+        self.api = _Api(self)
         # Resource namespaces
-        resources = build_resources(self.api)
+        resources = build_resources(self.api_client)
         self.iam = resources["iam"]  # type: ignore[assignment]
         self.identity_providers = resources["identity_providers"]  # type: ignore[assignment]
         self.assumed_sessions = resources["assumed_sessions"]  # type: ignore[assignment]
@@ -131,7 +178,7 @@ class HuudisClient:
     ) -> str:
         params: Dict[str, str] = {
             "response_type": "code",
-            "client_id": self.client_id,
+            "client_id": self._oidc_client_id(),
             "redirect_uri": redirect_uri,
             "scope": scope,
             "state": state,
@@ -156,7 +203,7 @@ class HuudisClient:
             "grant_type": "password",
             "username": email,
             "password": password,
-            "client_id": self.client_id,
+            "client_id": self._oidc_client_id(),
         }
         if self.client_secret:
             body["client_secret"] = self.client_secret
@@ -176,7 +223,7 @@ class HuudisClient:
             "grant_type": "urn:forjio:grant-type:signup",
             "email": email,
             "password": password,
-            "client_id": self.client_id,
+            "client_id": self._oidc_client_id(),
         }
         if self.client_secret:
             body["client_secret"] = self.client_secret
@@ -197,7 +244,7 @@ class HuudisClient:
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_uri,
-            "client_id": self.client_id,
+            "client_id": self._oidc_client_id(),
         }
         if self.client_secret:
             body["client_secret"] = self.client_secret
@@ -209,7 +256,7 @@ class HuudisClient:
         body: Dict[str, str] = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
-            "client_id": self.client_id,
+            "client_id": self._oidc_client_id(),
         }
         if self.client_secret:
             body["client_secret"] = self.client_secret
@@ -243,6 +290,39 @@ class HuudisClient:
         return self.authz.check(payload, auth_token=access_token)
 
     # ─── Internal ────────────────────────────────────────────────────────
+
+    def _apigen_request(
+        self,
+        method: str,
+        path: str,
+        *,
+        query: Optional[Dict[str, Any]] = None,
+        body: Any = None,
+    ) -> Any:
+        """The call behind ``client.api.*`` (api_generated.py): the same ApiClient (envelope,
+        errors) as every resource method, with the credential the route group takes —
+        ``/api/v1/app/*`` the app's client credentials, every other route the session bearer
+        or the access key."""
+        api_client = self.api_client
+        if path == "/api/v1/app" or path.startswith("/api/v1/app/"):
+            if self._app_client is None:
+                raise HuudisAuthError(
+                    "MISSING_CLIENT_CREDENTIALS",
+                    "/api/v1/app/* authenticates as your OIDC app: pass client_id + client_secret "
+                    "(or set HUUDIS_CLIENT_ID + HUUDIS_CLIENT_SECRET)",
+                )
+            api_client = self._app_client
+        q = {
+            k: v if isinstance(v, str) else json.dumps(v, separators=(",", ":"))
+            for k, v in (query or {}).items()
+            if v is not None
+        }
+        return api_client._request(method.upper(), path, body, query=q or None, headers=None, auth_token=None)
+
+    def _oidc_client_id(self) -> str:
+        if not self.client_id:
+            raise HuudisAuthError("MISSING_CLIENT_ID", "Set HUUDIS_CLIENT_ID env or pass client_id=...")
+        return self.client_id
 
     def _token_endpoint(self, body: Dict[str, str]) -> Dict[str, Any]:
         res = self._http.post(

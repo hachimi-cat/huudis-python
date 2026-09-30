@@ -3,8 +3,8 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "huudis"
-version = "0.4.0"
+name = "forjio-huudis"
+version = "0.5.0"
 description = "Official Python SDK for Huudis — email/social/MFA, fine-grained authorization, webhook signature verification, and full admin API (IAM, workspaces, end-users, billing, webhook subscriptions) with OIDC device-flow auth and multi-profile session store."
 readme = "README.md"
 license = { text = "MIT" }

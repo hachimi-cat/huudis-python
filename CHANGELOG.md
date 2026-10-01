@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.0
+- A route read by id next to its list is named `get` + the list's name: `client.api.account_get_webhook_subscriptions` (was `client.api.account_webhook_subscriptions_2`), `client.api.iam_get_groups` (was `client.api.iam_groups_2`), `client.api.iam_get_policies` (was `client.api.iam_policies_2`), `client.api.iam_get_roles` (was `client.api.iam_roles_2`), `client.api.iam_get_service_accounts` (was `client.api.iam_service_accounts_2`), `client.api.ops_get_end_users` (was `client.api.ops_end_users_2`). Each old name stays as a deprecated alias.
+
 ## 0.5.0
 - **Published on PyPI as `forjio-huudis`** (`pip install forjio-huudis`); the import is still `import huudis`. The PyPI name `huudis` belongs to an account Forjio no longer publishes from (like `forjio-linksnap`).
 - Access keys: `access_key_id` + `secret_access_key` (or `HUUDIS_ACCESS_KEY_ID` + `HUUDIS_SECRET_ACCESS_KEY`) sign every call `Huudis-HMAC-SHA256` when there is no `session` — the key acts as its user on `/account/*`, `/iam/*`, `/authz/*` within the user's IAM policies. `client_id` is optional with a key.

@@ -138,6 +138,10 @@ class GeneratedApi:
             raise ValueError("account_email_change needs password")
         return self._call("POST", f"/api/v1/account/email-change", {}, payload)
 
+    def account_get_webhook_subscriptions(self, id_: str) -> Any:
+        """Get a webhook subscription (GET /api/v1/account/webhook-subscriptions/{id})."""
+        return self._call("GET", f"/api/v1/account/webhook-subscriptions/{_q(id_)}", {}, None)
+
     def account_linked_accounts(self) -> Any:
         """List linked accounts (GET /api/v1/account/linked-accounts)."""
         return self._call("GET", f"/api/v1/account/linked-accounts", {}, None)
@@ -271,10 +275,6 @@ class GeneratedApi:
     def account_webhook_subscriptions(self) -> Any:
         """List webhook subscriptions (GET /api/v1/account/webhook-subscriptions)."""
         return self._call("GET", f"/api/v1/account/webhook-subscriptions", {}, None)
-
-    def account_webhook_subscriptions_2(self, id_: str) -> Any:
-        """Get a webhook subscription (GET /api/v1/account/webhook-subscriptions/{id})."""
-        return self._call("GET", f"/api/v1/account/webhook-subscriptions/{_q(id_)}", {}, None)
 
     def account_webhook_subscriptions_deliveries(self, id_: str, *, limit: Optional[Any] = None, status: Optional[Any] = None) -> Any:
         """List deliveries (GET /api/v1/account/webhook-subscriptions/{id}/deliveries)."""
@@ -591,13 +591,25 @@ class GeneratedApi:
         """Delete an user (DELETE /api/v1/iam/users/{id})."""
         return self._call("DELETE", f"/api/v1/iam/users/{_q(id_)}", {}, None)
 
+    def iam_get_groups(self, id_: str) -> Any:
+        """Get a group (GET /api/v1/iam/groups/{id})."""
+        return self._call("GET", f"/api/v1/iam/groups/{_q(id_)}", {}, None)
+
+    def iam_get_policies(self, id_: str) -> Any:
+        """Get a policy (GET /api/v1/iam/policies/{id})."""
+        return self._call("GET", f"/api/v1/iam/policies/{_q(id_)}", {}, None)
+
+    def iam_get_roles(self, id_: str) -> Any:
+        """Get a role (GET /api/v1/iam/roles/{id})."""
+        return self._call("GET", f"/api/v1/iam/roles/{_q(id_)}", {}, None)
+
+    def iam_get_service_accounts(self, id_: str) -> Any:
+        """Get a service account (GET /api/v1/iam/service-accounts/{id})."""
+        return self._call("GET", f"/api/v1/iam/service-accounts/{_q(id_)}", {}, None)
+
     def iam_groups(self) -> Any:
         """List groups (GET /api/v1/iam/groups)."""
         return self._call("GET", f"/api/v1/iam/groups", {}, None)
-
-    def iam_groups_2(self, id_: str) -> Any:
-        """Get a group (GET /api/v1/iam/groups/{id})."""
-        return self._call("GET", f"/api/v1/iam/groups/{_q(id_)}", {}, None)
 
     def iam_identity_providers(self) -> Any:
         """List identity providers (GET /api/v1/iam/identity-providers)."""
@@ -611,10 +623,6 @@ class GeneratedApi:
         """List policies (GET /api/v1/iam/policies)."""
         return self._call("GET", f"/api/v1/iam/policies", {}, None)
 
-    def iam_policies_2(self, id_: str) -> Any:
-        """Get a policy (GET /api/v1/iam/policies/{id})."""
-        return self._call("GET", f"/api/v1/iam/policies/{_q(id_)}", {}, None)
-
     def iam_policy_attachments(self, *, policy_id: Optional[str] = None, principal_type: Optional[str] = None, principal_id: Optional[str] = None) -> Any:
         """List policy attachments (GET /api/v1/iam/policy-attachments)."""
         return self._call("GET", f"/api/v1/iam/policy-attachments", {"policyId": policy_id, "principalType": principal_type, "principalId": principal_id}, None)
@@ -623,17 +631,9 @@ class GeneratedApi:
         """List roles (GET /api/v1/iam/roles)."""
         return self._call("GET", f"/api/v1/iam/roles", {}, None)
 
-    def iam_roles_2(self, id_: str) -> Any:
-        """Get a role (GET /api/v1/iam/roles/{id})."""
-        return self._call("GET", f"/api/v1/iam/roles/{_q(id_)}", {}, None)
-
     def iam_service_accounts(self) -> Any:
         """List service accounts (GET /api/v1/iam/service-accounts)."""
         return self._call("GET", f"/api/v1/iam/service-accounts", {}, None)
-
-    def iam_service_accounts_2(self, id_: str) -> Any:
-        """Get a service account (GET /api/v1/iam/service-accounts/{id})."""
-        return self._call("GET", f"/api/v1/iam/service-accounts/{_q(id_)}", {}, None)
 
     def iam_update_identity_providers(self, id_: str, *, name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Update an identity provider (PATCH /api/v1/iam/identity-providers/{id}).
@@ -803,10 +803,6 @@ class GeneratedApi:
         """Workspace-scoped directory of end-users — people who have consented to an OIDC client owned by the active workspace. (GET /api/v1/ops/end-users)."""
         return self._call("GET", f"/api/v1/ops/end-users", {}, None)
 
-    def ops_end_users_2(self, id_: str) -> Any:
-        """Get an end user (GET /api/v1/ops/end-users/{id})."""
-        return self._call("GET", f"/api/v1/ops/end-users/{_q(id_)}", {}, None)
-
     def ops_end_users_impersonate(self, id_: str, *, duration_seconds: Optional[int] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Impersonate an end user (POST /api/v1/ops/end-users/{id}/impersonate).
         
@@ -831,6 +827,34 @@ class GeneratedApi:
     def ops_end_users_verify_email(self, id_: str) -> Any:
         """Verify email an end user (POST /api/v1/ops/end-users/{id}/verify-email)."""
         return self._call("POST", f"/api/v1/ops/end-users/{_q(id_)}/verify-email", {}, None)
+
+    def ops_get_end_users(self, id_: str) -> Any:
+        """Get an end user (GET /api/v1/ops/end-users/{id})."""
+        return self._call("GET", f"/api/v1/ops/end-users/{_q(id_)}", {}, None)
+
+    def account_webhook_subscriptions_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``account_get_webhook_subscriptions`` (GET /api/v1/account/webhook-subscriptions/{id})."""
+        return self.account_get_webhook_subscriptions(*args, **kwargs)
+
+    def iam_groups_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``iam_get_groups`` (GET /api/v1/iam/groups/{id})."""
+        return self.iam_get_groups(*args, **kwargs)
+
+    def iam_policies_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``iam_get_policies`` (GET /api/v1/iam/policies/{id})."""
+        return self.iam_get_policies(*args, **kwargs)
+
+    def iam_roles_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``iam_get_roles`` (GET /api/v1/iam/roles/{id})."""
+        return self.iam_get_roles(*args, **kwargs)
+
+    def iam_service_accounts_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``iam_get_service_accounts`` (GET /api/v1/iam/service-accounts/{id})."""
+        return self.iam_get_service_accounts(*args, **kwargs)
+
+    def ops_end_users_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``ops_get_end_users`` (GET /api/v1/ops/end-users/{id})."""
+        return self.ops_get_end_users(*args, **kwargs)
 
 
 def _q(value: Any) -> str:

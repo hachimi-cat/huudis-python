@@ -803,13 +803,15 @@ class GeneratedApi:
         """Workspace-scoped directory of end-users — people who have consented to an OIDC client owned by the active workspace. (GET /api/v1/ops/end-users)."""
         return self._call("GET", f"/api/v1/ops/end-users", {}, None)
 
-    def ops_end_users_impersonate(self, id_: str, *, duration_seconds: Optional[int] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+    def ops_end_users_impersonate(self, id_: str, *, duration_seconds: Optional[int] = None, reason: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Impersonate an end user (POST /api/v1/ops/end-users/{id}/impersonate).
         
         Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
         payload: Dict[str, Any] = dict(json_body or {})
         if duration_seconds is not None:
             payload["durationSeconds"] = duration_seconds
+        if reason is not None:
+            payload["reason"] = reason
         return self._call("POST", f"/api/v1/ops/end-users/{_q(id_)}/impersonate", {}, payload)
 
     def ops_end_users_revoke(self, id_: str) -> Any:

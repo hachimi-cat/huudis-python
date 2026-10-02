@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0
+- New: `client.api.iam_key_requests`, `iam_get_key_requests`, `iam_key_requests_challenge`, `iam_key_requests_approve`, `iam_key_requests_deny` (what access keys ask a workspace owner to approve) and `iam_key_actions`, `iam_key_actions_undo` (what keys did to the workspace's members, and undoing it).
+- An access key can now add, invite, re-role and remove members, reset another member's password and manage SSO identity providers, when its user's policy names the action itself (`huudis:AddMember`, `huudis:InviteMember`, `huudis:UpdateMember`, `huudis:RemoveMember`, `huudis:ResetMemberPassword`, `huudis:CreateIdentityProvider`, `huudis:UpdateIdentityProvider`, `huudis:DeleteIdentityProvider`; a wildcard such as `huudis:*` does not grant them). Member changes run at once and every workspace owner is emailed a link to undo them. SSO, password resets and anything about the owner role answer `{"approvalRequired": True, "request": …}` (HTTP 202) until an owner approves with a second-factor code; then the same call runs once. A key never sets or sees a member's password.
+
 ## 0.7.0
 - `client.api.ops_end_users_impersonate(id, duration_seconds=…, reason=…)` takes `reason`, and `end_users.impersonate(id, reason=…)` now reaches the server: the audit log and the `huudis.ops.impersonation_*` webhook events carry it.
 - Huudis now delivers every webhook event its catalog lists (they were reserved): verify them with `verify_webhook_signature` as before; see /docs/api/webhooks for who receives which.

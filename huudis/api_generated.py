@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 
 class GeneratedApi:
-    """All 111 feature routes of the Huudis API."""
+    """All 118 feature routes of the Huudis API."""
 
     def __init__(self, client: Any) -> None:
         self._client = client
@@ -595,6 +595,10 @@ class GeneratedApi:
         """Get a group (GET /api/v1/iam/groups/{id})."""
         return self._call("GET", f"/api/v1/iam/groups/{_q(id_)}", {}, None)
 
+    def iam_get_key_requests(self, id_: str) -> Any:
+        """Get a key request (GET /api/v1/iam/key-requests/{id})."""
+        return self._call("GET", f"/api/v1/iam/key-requests/{_q(id_)}", {}, None)
+
     def iam_get_policies(self, id_: str) -> Any:
         """Get a policy (GET /api/v1/iam/policies/{id})."""
         return self._call("GET", f"/api/v1/iam/policies/{_q(id_)}", {}, None)
@@ -618,6 +622,46 @@ class GeneratedApi:
     def iam_invites(self) -> Any:
         """List invites (GET /api/v1/iam/invites)."""
         return self._call("GET", f"/api/v1/iam/invites", {}, None)
+
+    def iam_key_actions(self, *, limit: Optional[Any] = None) -> Any:
+        """List key actions (GET /api/v1/iam/key-actions)."""
+        return self._call("GET", f"/api/v1/iam/key-actions", {"limit": limit}, None)
+
+    def iam_key_actions_undo(self, id_: str, *, revoke_key: Optional[bool] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+        """Undo a key action (POST /api/v1/iam/key-actions/{id}/undo).
+        
+        Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
+        payload: Dict[str, Any] = dict(json_body or {})
+        if revoke_key is not None:
+            payload["revokeKey"] = revoke_key
+        return self._call("POST", f"/api/v1/iam/key-actions/{_q(id_)}/undo", {}, payload)
+
+    def iam_key_requests(self, *, limit: Optional[Any] = None, status: Optional[Any] = None) -> Any:
+        """List key requests (GET /api/v1/iam/key-requests)."""
+        return self._call("GET", f"/api/v1/iam/key-requests", {"limit": limit, "status": status}, None)
+
+    def iam_key_requests_approve(self, id_: str, *, challenge_token: Optional[str] = None, code: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+        """Approve a key request with the code from its challenge. (POST /api/v1/iam/key-requests/{id}/approve).
+        
+        Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
+        payload: Dict[str, Any] = dict(json_body or {})
+        if challenge_token is not None:
+            payload["challengeToken"] = challenge_token
+        if code is not None:
+            payload["code"] = code
+        if "challengeToken" not in payload:
+            raise ValueError("iam_key_requests_approve needs challenge_token")
+        if "code" not in payload:
+            raise ValueError("iam_key_requests_approve needs code")
+        return self._call("POST", f"/api/v1/iam/key-requests/{_q(id_)}/approve", {}, payload)
+
+    def iam_key_requests_challenge(self, id_: str) -> Any:
+        """Start approving a key request: a second-factor challenge for the signed-in owner (an emailed code is sent when they have an email factor). (POST /api/v1/iam/key-requests/{id}/challenge)."""
+        return self._call("POST", f"/api/v1/iam/key-requests/{_q(id_)}/challenge", {}, None)
+
+    def iam_key_requests_deny(self, id_: str) -> Any:
+        """Deny a key request (POST /api/v1/iam/key-requests/{id}/deny)."""
+        return self._call("POST", f"/api/v1/iam/key-requests/{_q(id_)}/deny", {}, None)
 
     def iam_policies(self) -> Any:
         """List policies (GET /api/v1/iam/policies)."""

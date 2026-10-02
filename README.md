@@ -94,8 +94,11 @@ app = HuudisClient(issuer="https://huudis.com", client_id="oc_…", client_secre
 signed_in = app.api.app_users(status="active")
 ```
 
-Person-only routes (password, sessions, account deletion, adding members, …) refuse a key
-with `PERSON_ONLY`; see <https://huudis.com/docs/api/authentication>. `sign_request(...)`
+Person-only routes (password, sessions, account deletion, creating keys, …) refuse a key
+with `PERSON_ONLY`. Members, invites, SSO identity providers and member password resets
+need the action named in the key's policy (no wildcard); owners are emailed an undo, or
+must approve first — the call returns `approvalRequired` and the same call runs once
+an owner approved it. See <https://huudis.com/docs/api/authentication>. `sign_request(...)`
 and `AccessKeyAuth` (an `httpx.Auth`) sign requests you build yourself.
 
 ## Types
